@@ -1,0 +1,101 @@
+Dashboard / Home Screen UI: "The Quick Glance Progress" - Detailed Breakdown
+
+Core Goal: Provide quick access to start a workout, a personalized greeting, and immediate, high-level insights into recent activity and progress.
+
+1. Top Bar / Header
+
+    Left Side:
+
+        Greeting: "Hello, [Username]!" (e.g., "Hello, Alex!"). Personal and welcoming.
+
+        Date: "Monday, Oct 23" (Dynamically updated). Provides context.
+
+    Right Side:
+
+        Profile / Settings Icon: (e.g., a gear icon or a small user avatar). Tapping this would navigate to a settings screen where the user can change unit_preference, toggle dark/light mode, edit profile, etc.
+
+        (Optional) Theme Toggle Icon: A small sun/moon icon for direct dark/light mode switching without going into settings.
+
+2. Main Content Area (Scrollable)
+
+This area will be composed of several cards/sections designed for quick glances.
+
+    Section A: Call to Action (Prominent)
+
+        Card Background: Could be a slightly different color or have a subtle gradient to make it stand out.
+
+        "Start New Workout" Button:
+
+            Style: Large, primary action button. Could be a Floating Action Button (FAB) at the bottom right, or a prominent button within this top card. Let's assume within the card for a cleaner top-down flow.
+
+            Label: "Start New Workout" or "Let's Lift!"
+
+            Action: Navigates to the Workout Logging Screen.
+
+        "Continue Last Workout" / "Load Template" (Optional, Smaller Secondary Action):
+
+            Style: Smaller button or text link, perhaps below "Start New Workout."
+
+            Label: "Continue Last Workout" (if there's an unfinished one) or "Load Template" (for predefined workout routines – a future Phase 3 idea). For MVP, "Continue Last Workout" is more relevant.
+
+            Action: Loads the last saved (potentially unfinished) workout into the Workout Logging Screen.
+
+    Section B: Progress Snapshot / Streak
+
+        Card Title: "Your Progress" or "Current Streak"
+
+        Key Metric 1 (e.g., "Workout Streak"): "🔥 5-Day Streak!" or "No current streak."
+
+        Key Metric 2 (e.g., "This Week's Workouts"): "💪 2/3 Workouts This Week" (if a goal is set).
+
+        Key Metric 3 (e.g., "Total Volume"): "Overall Volume: 15,000 kg" (or lbs).
+
+        (Optional) Mini-Chart/Heatmap (for Phase 2): A tiny visual representation of workout days for the current week/month. For MVP, text summary is sufficient.
+
+    Section C: Last Workout Summary
+
+        Card Title: "Last Workout"
+
+        Workout Name: "Leg Day" (from Workout.name)
+
+        Date: "October 22, 2023" (from Workout.date)
+
+        Duration: "60 min" (from Workout.duration_minutes)
+
+        Total Volume: "2,500 kg" (from Workout.total_volume_kg, converted if unit_preference is lbs)
+
+        Top Exercises (Optional, 1-2 items):
+
+            "Bench Press: 80kg x 5 reps (PR!)" (from WorkoutExercise.highest_weight_kg and one_rep_max_estimate_kg or a flag on the Set table).
+
+            "Squats: 100kg x 3 reps"
+
+        "View Details" Link: Tapping this card or a specific link would navigate to a detailed view of that particular workout.
+
+        Empty State: "No workouts logged yet. Start your first workout above!"
+
+    Section D: Quick Access to Exercises (For later MVP or Phase 2)
+
+        Card Title: "Your Exercises"
+
+        List/Grid: Could show a few recently used exercises or a button to "View All Exercises."
+
+3. Bottom Navigation Bar (Persistent)
+
+This is crucial for easy navigation between core sections of the app.
+
+    Home Icon: (This screen) - Should be active/highlighted when on the Dashboard.
+
+    Workouts Icon: (Navigates to a list of all past workouts)
+
+    Exercises Icon: (Navigates to a searchable list of all available exercises, global and custom)
+
+    Progress/Analytics Icon: (Placeholder for Phase 2; for MVP, it might just be a simple summary page or a "Coming Soon" message)
+
+Initial UI Considerations for React Native:
+
+    Styling: Use a global theme for dark/light mode, defining colors for backgrounds, text, primary/secondary elements, etc.
+
+    Components: Leverage React Native components like View (for cards/containers), Text, Button, ScrollView, FlatList (for recent workouts), and a custom BottomTabBar.
+
+    State Management: The user_id and unit_preference from the USER table will be essential for populating dynamic text and converting units.

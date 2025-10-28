@@ -1,0 +1,160 @@
+ %% =====================
+
+%% ENTITIES
+
+%% =====================
+
+
+USER {
+
+int id PK
+
+string name
+
+string email
+
+string unit_preference "ENUM: 'kg' | 'lbs'"
+
+datetime created_at
+
+datetime updated_at
+
+}
+
+
+EXERCISE {
+
+int id PK
+
+int user_id FK "nullable if global"
+
+string name
+
+string exercise_type "Strength / Cardio / Mobility"
+
+string primary_muscle_group
+
+string secondary_muscle_group
+
+string equipment
+
+string description
+
+boolean is_custom
+
+datetime created_at
+
+datetime updated_at
+
+}
+
+
+WORKOUT {
+
+int id PK
+
+int user_id FK
+
+datetime date
+
+string name
+
+string notes
+
+float duration_minutes
+
+float total_volume_kg
+
+int total_exercises
+
+int total_sets
+
+int feeling_rating "1–5"
+
+datetime created_at
+
+datetime updated_at
+
+datetime deleted_at "nullable"
+
+}
+
+
+WORKOUT_EXERCISE {
+
+int id PK
+
+int workout_id FK
+
+int exercise_id FK
+
+int exercise_order
+
+string notes
+
+int sets_completed
+
+float highest_weight_kg
+
+float total_volume_exercise_kg
+
+float one_rep_max_estimate_kg
+
+int rest_time_avg_seconds
+
+datetime created_at
+
+datetime updated_at
+
+}
+
+
+SET {
+
+int id PK
+
+int workout_exercise_id FK
+
+int set_number
+
+float weight_kg
+
+int reps
+
+int duration_seconds
+
+float distance_meters
+
+int rpe "1–10"
+
+int rest_time_seconds
+
+boolean is_warmup
+
+boolean is_failure
+
+string notes
+
+datetime created_at
+
+}
+
+
+%% =====================
+
+%% RELATIONSHIPS
+
+%% =====================
+
+
+USER ||--o{ EXERCISE : "creates/customizes"
+
+USER ||--o{ WORKOUT : "performs"
+
+WORKOUT ||--o{ WORKOUT_EXERCISE : "contains"
+
+EXERCISE ||--o{ WORKOUT_EXERCISE : "used in"
+
+WORKOUT_EXERCISE ||--o{ SET : "has many"
+
+
