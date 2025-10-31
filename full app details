@@ -1,0 +1,261 @@
+Gym Tracker App Project Summary - To Be Saved
+
+Project Name: GymTrackerApp
+
+Overall Goal: Develop a user-friendly Gym Tracker app, starting with a core MVP and expanding through planned phases.
+
+Phase 1: MVP Development Goals
+
+    Offline-First Workout Logging
+
+    Simple Dark/Light UI with Dashboard
+
+    Exercise Database
+
+    Workout Logging (Sets, Reps, Weight)
+
+Technology Stack
+
+    Frontend Framework: React Native
+
+    UI Library: React Native Paper (for Material Design aesthetics and components)
+
+    Offline Database: Realm (chosen for its performance and offline-first capabilities)
+
+    Navigation: React Navigation
+
+    Units Handling: Store all metrics in kilograms (kg) in the database. Client-side logic will convert to pounds (lbs) for display if the user's unit_preference is set to 'lbs'.
+
+Database Schema (ERD Textual Description)
+
+This schema supports user-specific data, global/custom exercises, detailed workout logging, and future analytics.
+
+1. USER Table
+
+    id (PK, int)
+
+    name (string)
+
+    email (string)
+
+    unit_preference (string, ENUM: 'kg' | 'lbs')
+
+    created_at (datetime)
+
+    updated_at (datetime)
+
+2. EXERCISE Table
+
+    id (PK, int)
+
+    user_id (FK, int, nullable if global) - Links to USER.id
+
+    name (string)
+
+    exercise_type (string, e.g., "Strength / Cardio / Mobility")
+
+    primary_muscle_group (string)
+
+    secondary_muscle_group (string)
+
+    equipment (string)
+
+    description (string)
+
+    is_custom (boolean)
+
+    created_at (datetime)
+
+    updated_at (datetime)
+
+3. WORKOUT Table
+
+    id (PK, int)
+
+    user_id (FK, int) - Links to USER.id
+
+    date (datetime)
+
+    name (string)
+
+    notes (string)
+
+    duration_minutes (float)
+
+    total_volume_kg (float)
+
+    total_exercises (int)
+
+    total_sets (int)
+
+    feeling_rating (int, 1–5)
+
+    created_at (datetime)
+
+    updated_at (datetime)
+
+    deleted_at (datetime, nullable)
+
+4. WORKOUT_EXERCISE Table
+
+    id (PK, int)
+
+    workout_id (FK, int) - Links to WORKOUT.id
+
+    exercise_id (FK, int) - Links to EXERCISE.id
+
+    exercise_order (int)
+
+    notes (string)
+
+    sets_completed (int)
+
+    highest_weight_kg (float)
+
+    total_volume_exercise_kg (float)
+
+    one_rep_max_estimate_kg (float)
+
+    rest_time_avg_seconds (int)
+
+    created_at (datetime)
+
+    updated_at (datetime)
+
+5. SET Table
+
+    id (PK, int)
+
+    workout_exercise_id (FK, int) - Links to WORKOUT_EXERCISE.id
+
+    set_number (int)
+
+    weight_kg (float)
+
+    reps (int)
+
+    duration_seconds (int)
+
+    distance_meters (float)
+
+    rpe (int, 1–10)
+
+    rest_time_seconds (int)
+
+    is_warmup (boolean)
+
+    is_failure (boolean)
+
+    notes (string)
+
+    created_at (datetime)
+
+Cardinalities:
+
+    USER ||--o{ EXERCISE : "creates/customizes"
+
+    USER ||--o{ WORKOUT : "performs"
+
+    WORKOUT ||--o{ WORKOUT_EXERCISE : "contains"
+
+    EXERCISE ||--o{ WORKOUT_EXERCISE : "used in"
+
+    WORKOUT_EXERCISE ||--o{ SET : "has many"
+
+UI Flow - Dashboard / Home Screen ("The Quick Glance Progress")
+
+Core Goal: Quick access to start a workout, personalized greeting, high-level insights into recent activity/progress.
+
+1. Top Bar / Header:
+
+    Left: "Hello, [Username]!", "Monday, Oct 23"
+
+    Right: Profile/Settings Icon (gear)
+
+2. Main Content Area (Scrollable Cards):
+
+    Section A: Call to Action (Prominent Buttons)
+
+        "Quick Start" Button: Navigates to Workout Logging Screen (Empty). For ad-hoc workouts.
+
+        "Workout Template" Button: Navigates to Template Management Screen (future MVP+). User can create/select templates.
+
+        "Resume Workout" Button: (Future MVP+). App automatically loads today's scheduled template into Workout Logging Screen.
+
+    Section B: Progress Snapshot / Streak: "🔥 5-Day Streak!", "💪 2/3 Workouts This Week", "Overall Volume: 15,000 kg"
+
+    Section C: Last Workout Summary: Card with Workout Name, Date, Duration, Total Volume, Top Exercises. "View Details" link. Empty state message.
+
+    Section D: Quick Access to Exercises (MVP+): "Your Exercises" card with list/grid or "View All Exercises" button.
+
+3. Bottom Navigation Bar (Persistent):
+
+    Home, Workouts, Exercises, Progress/Analytics (placeholder for Phase 2).
+
+UI Flow - Workout Logging Screen (for "Quick Start" Path)
+
+Core Goal: Efficiently add exercises and log sets/reps/weight in real-time.
+
+1. Workout Logging Screen (Main View - Initial Empty State)
+
+    Top Bar:
+
+        Appbar.BackAction (Back to Dashboard, with unsaved changes prompt).
+
+        Title: "Today's Workout - [Current Date]".
+
+        Appbar.Action (+ icon): Navigates to "Select Body Part" Screen to add more exercises.
+
+    Main Content: Empty state message: "Tap the '+' button to add your first exercise!"
+
+    FAB (Bottom Right): Checkmark / "Finish" icon. Action: Finalize, save workout, navigate to Dashboard/Summary.
+
+2. Workout Logging Screen (Main View - With Exercises Added)
+
+    Top Bar: Same as above.
+
+    Main Content: FlatList of Exercise Cards.
+
+        Each card: EXERCISE.name, list of logged sets (set_number, weight_kg, reps).
+
+        Interaction: Long-press on card to show contextual menu for "Edit Exercise Notes", "Reorder", "Delete Exercise" (from workout).
+
+        Action: Tapping "Add Set" button within an exercise card leads to the "Log Sets" Screen for that specific exercise.
+
+3. "Select Body Part" Screen
+
+    Top Bar: Back button, Title: "Select Body Part", Search bar.
+
+    Main Content: List of clickable body parts (e.g., "Chest", "Back"). Action: Tap -> "Select Exercise" Screen.
+
+4. "Select Exercise" Screen
+
+    Top Bar: Back button, Title: "[Selected Body Part] Exercises", Search bar, Appbar.Action (+ icon) -> "Create New Exercise" Screen/Modal.
+
+    Main Content: List of existing exercises. Action: Tap an exercise -> Add to current workout, navigate to "Log Sets" Screen for that exercise.
+
+5. "Create New Exercise" Screen/Modal
+
+    Top Bar/Modal Header: Close button, Title: "Create New Exercise".
+
+    Main Content: Input fields for Exercise Name, Primary Muscle Group (pre-filled), Type, Equipment, Description.
+
+    Action: Save -> Create new EXERCISE in DB, add to current workout, navigate to "Log Sets" Screen for this new exercise.
+
+6. "Log Sets" Screen
+
+    Top Bar: Back button (to Workout Logging Screen), Title: "[Exercise Name]".
+
+    Main Content: Displays current exercise name.
+
+        List of already logged sets for this exercise (with Edit/Delete options for each set).
+
+        "Add New Set" form: Input fields for weight_kg, reps. Buttons/toggles for is_warmup, is_failure, notes.
+
+        (Optional) Rest Timer.
+
+Future Considerations (for MVP+ / Later Phases)
+
+    Template Management: JSON export/import strategy. Database tables for TEMPLATE and USER_TEMPLATE_SCHEDULE.
+
+    Authentication: User login/registration flow will need to be developed, linking to the USER table.
