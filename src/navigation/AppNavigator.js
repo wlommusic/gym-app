@@ -3,8 +3,10 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
-// Import our new placeholder screens
-import HomeScreen from '../screens/HomeScreen';
+// --- Import our new stack ---
+import HomeStack from './HomeStack';
+
+// --- Import the other main screens ---
 import WorkoutsScreen from '../screens/WorkoutsScreen';
 import ExercisesScreen from '../screens/ExercisesScreen';
 import ProgressScreen from '../screens/ProgressScreen';
@@ -14,25 +16,25 @@ const Tab = createBottomTabNavigator();
 const AppNavigator = () => {
   return (
     <NavigationContainer>
-      {/* Use screenOptions here to apply "headerShown: false"
-        to ALL tabs in this navigator.
-      */}
       <Tab.Navigator
+        // This hides the default header for ALL tabs
         screenOptions={{
           headerShown: false,
         }}>
 
-        {/* Now this screen doesn't need its own 'header' option */}
+        {/* The "Home" tab now renders the ENTIRE HomeStack */}
         <Tab.Screen
-          name="Home"
-          component={HomeScreen}
+          name="HomeStack" // Renamed the route
+          component={HomeStack}
           options={{
+            tabBarLabel: 'Home', // This keeps the text on the tab correct
             tabBarIcon: ({ color, size }) => (
               <MaterialCommunityIcons name="home" color={color} size={size} />
             ),
           }}
         />
 
+        {/* Other tabs are unchanged */}
         <Tab.Screen
           name="Workouts"
           component={WorkoutsScreen}
@@ -42,7 +44,6 @@ const AppNavigator = () => {
             ),
           }}
         />
-
         <Tab.Screen
           name="Exercises"
           component={ExercisesScreen}
@@ -52,7 +53,6 @@ const AppNavigator = () => {
             ),
           }}
         />
-
         <Tab.Screen
           name="Progress"
           component={ProgressScreen}

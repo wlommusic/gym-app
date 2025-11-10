@@ -5,53 +5,84 @@ import {
   Card,
   Text,
   useTheme,
-  IconButton, // <-- We've replaced Appbar with IconButton
+  IconButton,
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRealm, useQuery } from '@realm/react';
+import { Workout } from '../models';
 
-const HomeScreen = () => {
-  // We still need the theme for colors
+const HomeScreen = ({ navigation }) => {
   const theme = useTheme();
-
-  // Date logic is correct and stays inside
   const today = new Date();
   const formattedDate = today.toDateString();
+  const realm = useRealm();
+
+  // This hook finds all Workouts with the status "pending".
+  const pendingWorkouts = useQuery(Workout, workouts => {
+    return workouts.filtered("status == 'pending'");
+  });
+
+  const onQuickStart = () => {
+    let workoutToOpen;
+
+    // Check if we found any pending workouts
+    if (pendingWorkouts.length > 0) {
+      // If yes, grab the first one to "resume" it
+      workoutToOpen = pendingWorkouts[0];
+    } else {
+      // If no, create a new one
+      realm.write(() => {
+        workoutToOpen = realm.create('Workout', {
+          date: new Date(),
+          status: 'pending',
+        });
+      });
+    }
+
+    // Navigate to the logging screen with the correct ID
+    navigation.navigate('WorkoutLogging', {
+      workoutId: workoutToOpen._id.toString(),
+    });
+  };
 
   return (
-    // We change the root SafeAreaView to apply the background color
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}>
 
-      {/* 1. --- THIS IS OUR NEW CUSTOM HEADER --- */}
+      {/* 1. Custom Header */}
       <View
-        style={styles.header}>
-        {/* This View holds our text */}
+        style={[
+          styles.header,
+          { backgroundColor: '#333333' },
+        ]}>
+
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Hello, User</Text> // for later, replace with user's name
+          <Text style={styles.headerTitle}>Hello, User!!!</Text>
           <Text style={styles.headerSubtitle}>{formattedDate}</Text>
         </View>
 
-        {/* We use an IconButton for the "cog" */}
         <IconButton
           icon="cog"
-          iconColor="#FFFFFF" // Force the icon color to white
+          iconColor="#FFFFFF"
           onPress={() => { /* TODO: Open settings */ }}
         />
       </View>
-      {/* --- END CUSTOM HEADER --- */}
 
-
-      {/* ScrollView for the rest of the content */}
+      {/* Scrollable content */}
       <ScrollView style={styles.content}>
 
-        {/* 2. Section A: Call to Action (Buttons) */}
+        {/* 2. Call to Action (Buttons) */}
         <View style={styles.buttonRow}>
           <Button
             icon="play-circle"
             mode="contained"
-            onPress={() => { /* TODO: Start Quick Workout */ }}
+            onPress={onQuickStart}
             style={styles.button}>
-            Quick Start
+
+            {/* --- THIS IS THE CHANGE --- */}
+            {pendingWorkouts.length > 0 ? 'Resume Editing' : 'Quick Start'}
+            {/* --- END CHANGE --- */}
+
           </Button>
           <Button
             icon="clipboard-list"
@@ -76,7 +107,6 @@ const HomeScreen = () => {
         <Card style={styles.card}>
           <Card.Title title="Last Workout" />
           <Card.Content>
-            {/* This is our "empty state" message for now */}
             <Text variant="bodyMedium">You haven't logged any workouts yet.</Text>
             <Text variant="bodyMedium">Tap "Quick Start" to begin!</Text>
           </Card.Content>
@@ -87,33 +117,29 @@ const HomeScreen = () => {
   );
 };
 
-// This is where we define our styles
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  // --- NEW HEADER STYLES ---
   header: {
     height: 80,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    backgroundColor: '#AD27F5',
+    backgroundColor: '#333333',
   },
-  headerContent: {
-    // This View just holds the two text lines
-  },
+  headerContent: {},
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFFFFF', // Force white text
+    color: '#FFFFFF',
   },
   headerSubtitle: {
     fontSize: 14,
-    color: '#FFFFFF', // Force white text
+    color: '#FFFFFF',
   },
-  // --- END NEW HEADER STYLES ---
   content: {
     padding: 16,
   },
@@ -123,7 +149,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   button: {
-    flex: 1, // Make buttons share space
+    flex: 1,
     marginHorizontal: 4,
   },
   card: {

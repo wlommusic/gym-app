@@ -14,7 +14,6 @@ export class User extends Realm.Object {
       updated_at: {type: 'date', default: () => new Date()},
 
       // Relationships (Inverse)
-      // A User can have many custom exercises and many workouts
       exercises: {
         type: 'linkingObjects',
         objectType: 'Exercise',
@@ -47,7 +46,6 @@ export class Exercise extends Realm.Object {
       updated_at: {type: 'date', default: () => new Date()},
 
       // Relationship (Forward)
-      // Links to the user who created this custom exercise (nullable for global exercises)
       user: 'User?',
     },
   };
@@ -62,6 +60,11 @@ export class Workout extends Realm.Object {
       _id: {type: 'objectId', default: () => new Realm.BSON.ObjectId()},
       date: {type: 'date', default: () => new Date()},
       name: 'string?', // e.g., "Push Day"
+
+      // --- THIS IS THE NEW LINE ---
+      status: {type: 'string', default: 'pending'}, // "pending" | "completed"
+      // --- END NEW LINE ---
+
       notes: 'string?',
       duration_minutes: 'float?',
       total_volume_kg: 'float?',
@@ -73,9 +76,7 @@ export class Workout extends Realm.Object {
       deleted_at: 'date?', // For soft deletes
 
       // Relationship (Forward)
-      // A Workout belongs to one User
-      user: 'User',
-      // A Workout contains many WorkoutExercises
+      user: 'User?', // <-- Also changed this to 'User?' so it can be created without a user first
       workoutExercises: 'WorkoutExercise[]',
     },
   };
@@ -99,13 +100,10 @@ export class WorkoutExercise extends Realm.Object {
       updated_at: {type: 'date', default: () => new Date()},
 
       // Relationship (Forward)
-      // A WorkoutExercise uses one Exercise
-      exercise: 'Exercise',
-      // A WorkoutExercise contains many Sets
+      exercise: 'Exercise?', // <-- Changed this to 'Exercise?' for safety
       sets: 'Set[]',
 
       // Relationship (Inverse)
-      // Belongs to one Workout
       workout: {
         type: 'linkingObjects',
         objectType: 'Workout',
@@ -135,7 +133,6 @@ export class Set extends Realm.Object {
       created_at: {type: 'date', default: () => new Date()},
 
       // Relationship (Inverse)
-      // Belongs to one WorkoutExercise
       workoutExercise: {
         type: 'linkingObjects',
         objectType: 'WorkoutExercise',
