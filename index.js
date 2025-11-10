@@ -1,25 +1,24 @@
 import React from 'react';
 import {AppRegistry} from 'react-native';
-import App from './App'; // This is the App.js file, the main component
+import App from './App';
 import {name as appName} from './app.json';
 
 // --- NEW IMPORTS ---
-// 1. We import the RealmProvider from our database library
 import {RealmProvider} from '@realm/react';
-// 2. We import the database config we created
 import {realmConfig} from './src/realmConfig';
-// --- END NEW IMPORTS ---
+import {PaperProvider} from 'react-native-paper'; // 1. Import PaperProvider
 
-// --- NEW COMPONENT ---
-// We've created a new "wrapper" component.
-// Its only job is to wrap our <App> component with the <RealmProvider>.
+// --- MODIFIED WRAPPER ---
+// 2. We wrap our app in the PaperProvider, right inside the RealmProvider.
+// The order matters: PaperProvider can go inside or outside, but
+// let's keep it clean like this.
 const AppWrapper = () => (
   <RealmProvider {...realmConfig}>
-    <App />
+    <PaperProvider>
+      <App />
+    </PaperProvider>
   </RealmProvider>
 );
-// --- END NEW COMPONENT ---
+// --- END MODIFIED WRAPPER ---
 
-// Finally, we tell React Native to register our NEW AppWrapper component
-// as the main app, instead of the original 'App' component.
 AppRegistry.registerComponent(appName, () => AppWrapper);
