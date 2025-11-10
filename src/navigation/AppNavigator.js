@@ -9,19 +9,20 @@ import WorkoutsScreen from '../screens/WorkoutsScreen';
 import ExercisesScreen from '../screens/ExercisesScreen';
 import ProgressScreen from '../screens/ProgressScreen';
 
-// 1. This creates the "Tab" object
 const Tab = createBottomTabNavigator();
 
 const AppNavigator = () => {
   return (
-    // 2. This container is required to wrap all navigation
     <NavigationContainer>
-      {/* 3. This is the Tab Bar component itself */}
+      {/* Use screenOptions here to apply "headerShown: false"
+        to ALL tabs in this navigator.
+      */}
       <Tab.Navigator
         screenOptions={{
-          headerShown: false, // We'll add custom headers later
+          headerShown: false,
         }}>
-        {/* 4. This is our first tab */}
+
+        {/* Now this screen doesn't need its own 'header' option */}
         <Tab.Screen
           name="Home"
           component={HomeScreen}
@@ -31,7 +32,7 @@ const AppNavigator = () => {
             ),
           }}
         />
-        {/* 5. This is our second tab */}
+
         <Tab.Screen
           name="Workouts"
           component={WorkoutsScreen}
@@ -41,7 +42,7 @@ const AppNavigator = () => {
             ),
           }}
         />
-        {/* 6. This is our third tab */}
+
         <Tab.Screen
           name="Exercises"
           component={ExercisesScreen}
@@ -51,7 +52,7 @@ const AppNavigator = () => {
             ),
           }}
         />
-        {/* 7. This is our fourth tab */}
+
         <Tab.Screen
           name="Progress"
           component={ProgressScreen}
