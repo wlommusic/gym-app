@@ -3,10 +3,11 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
-// --- Import our new stack ---
-import HomeStack from './HomeStack';
+// --- NEW IMPORT ---
+import { useTheme } from 'react-native-paper'; // 1. Import useTheme
+// --- END NEW IMPORT ---
 
-// --- Import the other main screens ---
+import HomeStack from './HomeStack';
 import WorkoutsScreen from '../screens/WorkoutsScreen';
 import ExercisesScreen from '../screens/ExercisesScreen';
 import ProgressScreen from '../screens/ProgressScreen';
@@ -14,27 +15,40 @@ import ProgressScreen from '../screens/ProgressScreen';
 const Tab = createBottomTabNavigator();
 
 const AppNavigator = () => {
+  // --- NEW HOOK ---
+  // 2. Get the current theme
+  const theme = useTheme();
+  // --- END NEW HOOK ---
+
   return (
     <NavigationContainer>
       <Tab.Navigator
-        // This hides the default header for ALL tabs
+        // 3. We update screenOptions to apply theme colors
         screenOptions={{
           headerShown: false,
+
+          // --- THIS IS THE FIX ---
+          // Set the tab bar's background color
+          tabBarStyle: {
+            backgroundColor: theme.colors.surface,
+          },
+          // Set the color for the active (selected) tab icon
+          tabBarActiveTintColor: theme.colors.primary,
+          // Set the color for inactive tabs
+          tabBarInactiveTintColor: theme.colors.onSurfaceVariant,
+          // --- END FIX ---
         }}>
 
-        {/* The "Home" tab now renders the ENTIRE HomeStack */}
         <Tab.Screen
-          name="HomeStack" // Renamed the route
+          name="HomeStack"
           component={HomeStack}
           options={{
-            tabBarLabel: 'Home', // This keeps the text on the tab correct
+            tabBarLabel: 'Home',
             tabBarIcon: ({ color, size }) => (
               <MaterialCommunityIcons name="home" color={color} size={size} />
             ),
           }}
         />
-
-        {/* Other tabs are unchanged */}
         <Tab.Screen
           name="Workouts"
           component={WorkoutsScreen}

@@ -1,31 +1,25 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Appbar, Text, Button, TextInput } from 'react-native-paper';
-
-// --- NEW IMPORTS ---
+// 1. Import useTheme
+import { Appbar, Text, Button, TextInput, useTheme } from 'react-native-paper';
 import { useRealm } from '@realm/react';
 import { Exercise } from '../models';
-// --- END NEW IMPORTS ---
 
 const CreateExerciseScreen = ({ navigation }) => {
   const realm = useRealm();
+  // 2. Get the theme
+  const theme = useTheme();
 
-  // --- NEW STATE ---
-  // 1. Create state variables to hold our form data
   const [name, setName] = useState('');
   const [muscleGroup, setMuscleGroup] = useState('');
   const [equipment, setEquipment] = useState('');
-  // --- END NEW STATE ---
 
   const goBack = () => {
     navigation.goBack();
   };
 
-  // --- NEW FUNCTION ---
-  // 2. This function saves the new exercise to the database
   const onSaveExercise = () => {
     if (!name || !muscleGroup) {
-      // Simple validation
       alert('Please fill in at least Name and Muscle Group.');
       return;
     }
@@ -35,25 +29,23 @@ const CreateExerciseScreen = ({ navigation }) => {
         name: name,
         primary_muscle_group: muscleGroup,
         equipment: equipment,
-        is_custom: true, // 3. Mark this as a custom exercise
+        is_custom: true,
       });
     });
 
-    // 4. Go back to the previous screen (SelectExerciseScreen)
     navigation.goBack();
   };
-  // --- END NEW FUNCTION ---
 
   return (
-    <View style={styles.container}>
+    // 3. Apply the theme's background color
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Appbar.Header>
         <Appbar.BackAction onPress={goBack} />
         <Appbar.Content title="Create New Exercise" />
       </Appbar.Header>
 
-      {/* 5. Use ScrollView in case form gets long */}
       <ScrollView style={styles.content}>
-        {/* --- NEW FORM UI --- */}
         <TextInput
           label="Exercise Name (Required)"
           value={name}
@@ -81,7 +73,6 @@ const CreateExerciseScreen = ({ navigation }) => {
           style={styles.saveButton}>
           Save Exercise
         </Button>
-        {/* --- END NEW FORM UI --- */}
       </ScrollView>
     </View>
   );

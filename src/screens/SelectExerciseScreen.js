@@ -1,14 +1,17 @@
 import React from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
-import { Appbar, Text, List } from 'react-native-paper';
+// 1. Import useTheme
+import { Appbar, Text, List, useTheme } from 'react-native-paper';
 import { useRealm, useQuery } from '@realm/react';
 import { Workout, Exercise, WorkoutExercise } from '../models';
-import { BSON } from 'realm'; // <-- This was the typo (was 'in')
+import { BSON } from 'realm';
 import { defaultExercises } from '../data/seedExercises';
 
 const SelectExerciseScreen = ({ navigation, route }) => {
   const { workoutId } = route.params || {};
   const realm = useRealm();
+  // 2. Get the theme
+  const theme = useTheme();
 
   const allExercises = useQuery(Exercise, exercises => {
     return exercises.sorted('name');
@@ -47,7 +50,9 @@ const SelectExerciseScreen = ({ navigation, route }) => {
   };
 
   return (
-    <View style={styles.container}>
+    // 3. Apply the theme's background color
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Appbar.Header>
         <Appbar.BackAction onPress={goBack} />
         <Appbar.Content title="Select Exercise" />

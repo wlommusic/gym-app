@@ -1,22 +1,21 @@
 import React from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
-import { Appbar, List, Text } from 'react-native-paper'; // Note: No 'Button'
+// 1. Import useTheme
+import { Appbar, List, Text, useTheme } from 'react-native-paper';
 import { useRealm, useQuery } from '@realm/react';
 import { Exercise } from '../models';
-
-// 1. Import our seed data
 import { defaultExercises } from '../data/seedExercises';
 
 const ExercisesScreen = () => {
+  // 2. Get the theme
+  const theme = useTheme();
   const realm = useRealm();
 
-  // 2. This hook gets a "live" list of ALL exercises
   const allExercises = useQuery(Exercise, exercises => {
     return exercises.sorted('name');
   });
 
-  // 3. This is our "fallback" seeder, in case this
-  //    screen is the first one to ever ask for exercises.
+  // Seeder logic
   if (allExercises.length === 0) {
     realm.write(() => {
       defaultExercises.forEach(exercise => {
@@ -26,20 +25,19 @@ const ExercisesScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
-      {/* 4. We add a simple header */}
+    // 3. Apply the theme's background color
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Appbar.Header>
         <Appbar.Content title="Exercise Database" />
       </Appbar.Header>
 
-      {/* 5. We use the same FlatList to show the data */}
       <FlatList
         data={allExercises}
         renderItem={({ item }) => (
           <List.Item
             title={item.name}
             description={`${item.primary_muscle_group} | ${item.equipment}`}
-            // 6. No onPress handler. This is just a list.
           />
         )}
         keyExtractor={item => item._id.toString()}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
-import { Appbar, Text, Button, List } from 'react-native-paper';
+// 1. Import useTheme
+import { Appbar, Text, Button, List, useTheme } from 'react-native-paper';
 import { useRealm, useObject } from '@realm/react';
 import { Workout } from '../models';
 import { BSON } from 'realm';
@@ -8,8 +9,9 @@ import { BSON } from 'realm';
 const WorkoutLoggingScreen = ({ navigation, route }) => {
   const { workoutId } = route.params || {};
   const realm = useRealm();
+  // 2. Get the theme
+  const theme = useTheme();
 
-  // This "live" hook is what makes this work
   const activeWorkout = useObject(Workout, new BSON.ObjectId(workoutId));
 
   const goBack = () => {
@@ -45,7 +47,9 @@ const WorkoutLoggingScreen = ({ navigation, route }) => {
   };
 
   return (
-    <View style={styles.container}>
+    // 3. Apply the theme's background color
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Appbar.Header>
         <Appbar.BackAction onPress={goBack} />
         <Appbar.Content title="Log Workout" />
@@ -58,12 +62,7 @@ const WorkoutLoggingScreen = ({ navigation, route }) => {
         renderItem={({ item }) => (
           <List.Item
             title={item.exercise?.name || 'Exercise not found'}
-
-            // --- THIS IS THE CHANGE ---
-            // We read the length of the 'sets' list
             description={`${item.sets.length} sets`}
-            // --- END CHANGE ---
-
             onPress={() => onSelectWorkoutExercise(item._id)}
           />
         )}

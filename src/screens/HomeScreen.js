@@ -12,7 +12,7 @@ import { useRealm, useQuery } from '@realm/react';
 import { Workout } from '../models';
 
 const HomeScreen = ({ navigation }) => {
-  const theme = useTheme();
+  const theme = useTheme(); // This hook gets the current theme
   const today = new Date();
   const formattedDate = today.toDateString();
   const realm = useRealm();
@@ -28,8 +28,6 @@ const HomeScreen = ({ navigation }) => {
   });
 
   const lastWorkout = completedWorkouts[0];
-
-  // --- We have removed the getExerciseNames helper function ---
 
   const onQuickStart = () => {
     let workoutToOpen;
@@ -54,11 +52,14 @@ const HomeScreen = ({ navigation }) => {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}>
 
-      {/* 1. Custom Header (Unchanged) */}
+      {/* 1. Custom Header */}
       <View
         style={[
           styles.header,
-          { backgroundColor: '#333333' },
+          // --- THIS IS THE CHANGE ---
+          // We're using the theme's primary color again
+          { backgroundColor: theme.colors.primary },
+          // --- END CHANGE ---
         ]}>
 
         <View style={styles.headerContent}>
@@ -73,10 +74,10 @@ const HomeScreen = ({ navigation }) => {
         />
       </View>
 
-      {/* Scrollable content (Unchanged) */}
+      {/* Scrollable content */}
       <ScrollView style={styles.content}>
 
-        {/* 2. Call to Action (Unchanged) */}
+        {/* 2. Call to Action (Buttons) */}
         <View style={styles.buttonRow}>
           <Button
             icon="play-circle"
@@ -94,7 +95,7 @@ const HomeScreen = ({ navigation }) => {
           </Button>
         </View>
 
-        {/* 3. Progress Snapshot (Unchanged) */}
+        {/* 3. Progress Snapshot */}
         <Card style={styles.card}>
           <Card.Title title="Your Week" />
           <Card.Content>
@@ -106,7 +107,7 @@ const HomeScreen = ({ navigation }) => {
           </Card.Content>
         </Card>
 
-        {/* --- 4. REVERTED Last Workout Summary --- */}
+        {/* 4. Last Workout Summary */}
         <Card style={styles.card}>
           <Card.Title title="Last Workout" />
           <Card.Content>
@@ -115,11 +116,9 @@ const HomeScreen = ({ navigation }) => {
                 <Text variant="bodyMedium">
                   {lastWorkout.date.toDateString()}
                 </Text>
-                {/* --- THIS IS THE CHANGE --- */}
                 <Text variant="bodyMedium">
                   {lastWorkout.workoutExercises.length} Exercises
                 </Text>
-                {/* --- END CHANGE --- */}
               </View>
             ) : (
               <View>
@@ -129,14 +128,13 @@ const HomeScreen = ({ navigation }) => {
             )}
           </Card.Content>
         </Card>
-        {/* --- END REVERT --- */}
 
       </ScrollView>
     </SafeAreaView>
   );
 };
 
-// Styles (Unchanged)
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -147,7 +145,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    backgroundColor: '#333333',
+    // We removed the hardcoded 'backgroundColor' from here
   },
   headerContent: {},
   headerTitle: {

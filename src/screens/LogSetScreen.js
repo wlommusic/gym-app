@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, FlatList } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, FlatList, Alert } from 'react-native';
 import {
   Appbar,
   Text,
   Button,
   TextInput,
   List,
-  IconButton, // 1. Import IconButton
+  IconButton,
+  useTheme,
 } from 'react-native-paper';
 import { useRealm, useObject } from '@realm/react';
 import { WorkoutExercise, Set } from '../models';
@@ -15,92 +16,134 @@ import { BSON } from 'realm';
 const LogSetScreen = ({ navigation, route }) => {
   const { workoutExerciseId } = route.params || {};
   const realm = useRealm();
+  const theme = useTheme();
 
+  // This hook gets the "live" object from Realm
   const activeWorkoutExercise = useObject(
     WorkoutExercise,
     new BSON.ObjectId(workoutExerciseId),
   );
 
-  // --- NEW STATE ---
-  // 2. We add state to track which set (if any) we are editing
-  const [editingSetId, setEditingSetId] = useState(null);
-  // --- END NEW STATE ---
+  // This "useState" array is our "static" copy for the UI
+  // This is the key to fixing all the bugs
+  const [displayedSets, setDisplayedSets] = useState([]);
 
+  const [editingSetId, setEditingSetId] = useState(null);
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
+
+  // This 'useEffect' syncs the live Realm data (activeWorkoutExercise.sets)
+  // into our static state (displayedSets) ONCE when the screen loads.
+  useEffect(() => {
+    if (activeWorkoutExercise) {
+      // .toJSON() makes them plain, safe objects.
+      setDisplayedSets(
+        Array.from(activeWorkoutExercise.sets.map(set => set.toJSON())),
+      );
+    }
+  }, [activeWorkoutExercise]); // Only re-sync when the object itself loads
 
   const goBack = () => {
     navigation.goBack();
   };
 
-  // --- UPDATED FUNCTION ---
-  // 3. This function now handles BOTH creating and updating
   const onLogOrUpdateSet = () => {
-    if (!weight || !reps || !activeWorkoutExercise) {
+    // Validation
+    const weightRegex = /^\d*\.?\d+$/;
+    const repsRegex = /^\d+$/;
+
+    if (!weight || !reps) {
+      Alert.alert('Error', 'Please fill in both Weight and Reps.');
+      return;
+    }
+    if (!weightRegex.test(weight)) {
+      Alert.alert('Invalid Weight', 'Please enter a valid number (e.g., 60 or 60.5).');
+      return;
+    }
+    if (!repsRegex.test(reps)) {
+      Alert.alert('Invalid Reps', 'Please enter a whole number (e.g., 10).');
+      return;
+    }
+    if (!activeWorkoutExercise) {
+      Alert.alert('Error', 'Could not find active workout. Please go back and try again.');
       return;
     }
 
+    let updatedSet; // We'll hold the new/updated set data here
+
+    // 1. Write to the database
     realm.write(() => {
       if (editingSetId) {
         // --- EDIT LOGIC ---
-        // 4. We're in "edit mode," so find the set and update it
         const setToUpdate = realm.objectForPrimaryKey(Set, editingSetId);
         if (setToUpdate) {
           setToUpdate.weight_kg = parseFloat(weight);
           setToUpdate.reps = parseInt(reps);
+          updatedSet = setToUpdate.toJSON(); // Get a plain copy
         }
       } else {
         // --- CREATE LOGIC ---
-        // 5. We're in "create mode," so create a new set
         const newSet = realm.create('Set', {
-          set_number: activeWorkoutExercise.sets.length + 1,
+          set_number: displayedSets.length + 1, // Base set_number on our static list
           weight_kg: parseFloat(weight),
           reps: parseInt(reps),
         });
         activeWorkoutExercise.sets.push(newSet);
+        updatedSet = newSet.toJSON(); // Get a plain copy
       }
     });
 
-    // 6. Clear inputs and exit edit mode
+    // 2. Manually update our UI state (this is instant)
+    if (editingSetId) {
+      setDisplayedSets(currentSets =>
+        currentSets.map(s => (s._id.equals(editingSetId) ? updatedSet : s)),
+      );
+    } else {
+      setDisplayedSets(currentSets => [...currentSets, updatedSet]);
+    }
+
+    // 3. Clear the form
     setWeight('');
     setReps('');
     setEditingSetId(null);
   };
-  // --- END UPDATED FUNCTION ---
 
-  // --- NEW FUNCTION ---
-  // 7. This runs when the "delete" icon is pressed
   const onDeleteSet = (setIdToDelete) => {
+    // 1. Update our UI state *IMMEDIATELY*
+    //    This wins the race condition and fixes the crash
+    setDisplayedSets(currentSets =>
+      currentSets.filter(s => !s._id.equals(setIdToDelete)),
+    );
+
+    // 2. Now, update the database in the background
     realm.write(() => {
       const setToDelete = realm.objectForPrimaryKey(Set, setIdToDelete);
       if (setToDelete) {
-        // This command removes the object from the database
         realm.delete(setToDelete);
       }
     });
-  };
-  // --- END NEW FUNCTION ---
 
-  // --- NEW FUNCTION ---
-  // 8. This runs when the "edit" icon is pressed
+    // 3. Clear form if we were editing the deleted set
+    if (editingSetId && editingSetId.equals(setIdToDelete)) {
+      onCancelEdit();
+    }
+  };
+
   const onStartEditSet = (set) => {
     setEditingSetId(set._id);
     setWeight(set.weight_kg.toString());
     setReps(set.reps.toString());
   };
-  // --- END NEW FUNCTION ---
 
-  // --- NEW FUNCTION ---
-  // 9. This runs if you're editing and want to cancel
   const onCancelEdit = () => {
     setEditingSetId(null);
     setWeight('');
     setReps('');
   };
-  // --- END NEW FUNCTION ---
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Appbar.Header>
         <Appbar.BackAction onPress={goBack} />
         <Appbar.Content
@@ -108,7 +151,7 @@ const LogSetScreen = ({ navigation, route }) => {
         />
       </Appbar.Header>
 
-      {/* --- UPDATED FORM --- */}
+      {/* Form (Unchanged) */}
       <View style={styles.formContainer}>
         <TextInput
           label="Weight (kg)"
@@ -127,15 +170,13 @@ const LogSetScreen = ({ navigation, route }) => {
           mode="outlined"
         />
         <Button
-          icon={editingSetId ? 'check' : 'plus'} // 10. Change icon
+          icon={editingSetId ? 'check' : 'plus'}
           mode="contained"
           onPress={onLogOrUpdateSet}
           style={styles.logButton}>
-          {/* 11. Change button text */}
           {editingSetId ? 'Update Set' : 'Log Set'}
         </Button>
 
-        {/* 12. Show a "Cancel" button only when editing */}
         {editingSetId && (
           <Button
             mode="outlined"
@@ -145,11 +186,10 @@ const LogSetScreen = ({ navigation, route }) => {
           </Button>
         )}
       </View>
-      {/* --- END UPDATED FORM --- */}
 
-      {/* --- UPDATED SET LIST --- */}
       <FlatList
-        data={activeWorkoutExercise?.sets}
+        // Use our "static" state array for the data
+        data={displayedSets}
         keyExtractor={item => item._id.toString()}
         ListHeaderComponent={
           <Text variant="titleMedium" style={styles.listHeader}>
@@ -159,9 +199,8 @@ const LogSetScreen = ({ navigation, route }) => {
         renderItem={({ item, index }) => (
           <List.Item
             title={`Set ${index + 1}: ${item.weight_kg} kg x ${item.reps} reps`}
-            // 13. Add icons to the right of the list item
             right={() => (
-              <View style={{flexDirection: 'row'}}>
+              <View style={{ flexDirection: 'row' }}>
                 <IconButton
                   icon="pencil"
                   size={20}
@@ -180,7 +219,6 @@ const LogSetScreen = ({ navigation, route }) => {
           <Text style={styles.emptyText}>No sets logged yet.</Text>
         }
       />
-      {/* --- END UPDATED SET LIST --- */}
     </View>
   );
 };
