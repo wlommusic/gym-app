@@ -17,20 +17,26 @@ const HomeScreen = ({ navigation }) => {
   const formattedDate = today.toDateString();
   const realm = useRealm();
 
-  // This hook finds all Workouts with the status "pending".
+  // Query for pending workouts
   const pendingWorkouts = useQuery(Workout, workouts => {
     return workouts.filtered("status == 'pending'");
   });
 
+  // Query for completed workouts, newest first
+  const completedWorkouts = useQuery(Workout, workouts => {
+    return workouts.filtered("status == 'completed'").sorted('date', true);
+  });
+
+  const lastWorkout = completedWorkouts[0];
+
+  // --- We have removed the getExerciseNames helper function ---
+
   const onQuickStart = () => {
     let workoutToOpen;
 
-    // Check if we found any pending workouts
     if (pendingWorkouts.length > 0) {
-      // If yes, grab the first one to "resume" it
       workoutToOpen = pendingWorkouts[0];
     } else {
-      // If no, create a new one
       realm.write(() => {
         workoutToOpen = realm.create('Workout', {
           date: new Date(),
@@ -39,7 +45,6 @@ const HomeScreen = ({ navigation }) => {
       });
     }
 
-    // Navigate to the logging screen with the correct ID
     navigation.navigate('WorkoutLogging', {
       workoutId: workoutToOpen._id.toString(),
     });
@@ -49,7 +54,7 @@ const HomeScreen = ({ navigation }) => {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}>
 
-      {/* 1. Custom Header */}
+      {/* 1. Custom Header (Unchanged) */}
       <View
         style={[
           styles.header,
@@ -68,21 +73,17 @@ const HomeScreen = ({ navigation }) => {
         />
       </View>
 
-      {/* Scrollable content */}
+      {/* Scrollable content (Unchanged) */}
       <ScrollView style={styles.content}>
 
-        {/* 2. Call to Action (Buttons) */}
+        {/* 2. Call to Action (Unchanged) */}
         <View style={styles.buttonRow}>
           <Button
             icon="play-circle"
             mode="contained"
             onPress={onQuickStart}
             style={styles.button}>
-
-            {/* --- THIS IS THE CHANGE --- */}
             {pendingWorkouts.length > 0 ? 'Resume Editing' : 'Quick Start'}
-            {/* --- END CHANGE --- */}
-
           </Button>
           <Button
             icon="clipboard-list"
@@ -93,31 +94,49 @@ const HomeScreen = ({ navigation }) => {
           </Button>
         </View>
 
-        {/* 3. Section B: Progress Snapshot */}
+        {/* 3. Progress Snapshot (Unchanged) */}
         <Card style={styles.card}>
           <Card.Title title="Your Week" />
           <Card.Content>
             <Text variant="bodyMedium">🔥 0-Day Streak!</Text>
-            <Text variant="bodyMedium">💪 0/3 Workouts This Week</Text>
+            <Text variant="bodyMedium">
+              💪 {completedWorkouts.length} Workouts This Week
+            </Text>
             <Text variant="bodyMedium">Overall Volume: 0 kg</Text>
           </Card.Content>
         </Card>
 
-        {/* 4. Section C: Last Workout Summary */}
+        {/* --- 4. REVERTED Last Workout Summary --- */}
         <Card style={styles.card}>
           <Card.Title title="Last Workout" />
           <Card.Content>
-            <Text variant="bodyMedium">You haven't logged any workouts yet.</Text>
-            <Text variant="bodyMedium">Tap "Quick Start" to begin!</Text>
+            {lastWorkout ? (
+              <View>
+                <Text variant="bodyMedium">
+                  {lastWorkout.date.toDateString()}
+                </Text>
+                {/* --- THIS IS THE CHANGE --- */}
+                <Text variant="bodyMedium">
+                  {lastWorkout.workoutExercises.length} Exercises
+                </Text>
+                {/* --- END CHANGE --- */}
+              </View>
+            ) : (
+              <View>
+                <Text variant="bodyMedium">You haven't logged any workouts yet.</Text>
+                <Text variant="bodyMedium">Tap "Quick Start" to begin!</Text>
+              </View>
+            )}
           </Card.Content>
         </Card>
+        {/* --- END REVERT --- */}
 
       </ScrollView>
     </SafeAreaView>
   );
 };
 
-// Styles
+// Styles (Unchanged)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
