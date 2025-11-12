@@ -1,13 +1,14 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 
-// Import the screens
+// Import ALL the screens for this stack
 import HomeScreen from '../screens/HomeScreen';
 import WorkoutLoggingScreen from '../screens/WorkoutLoggingScreen';
 import SelectExerciseScreen from '../screens/SelectExerciseScreen';
-// --- NEW IMPORT ---
 import LogSetScreen from '../screens/LogSetScreen';
-// --- END NEW IMPORT ---
+
+import CreateExerciseScreen from '../screens/CreateExerciseScreen';
+
 
 const Stack = createStackNavigator();
 
@@ -20,11 +21,8 @@ const HomeStack = () => {
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="WorkoutLogging" component={WorkoutLoggingScreen} />
       <Stack.Screen name="SelectExercise" component={SelectExerciseScreen} />
-
-      {/* --- ADD THIS NEW SCREEN --- */}
       <Stack.Screen name="LogSet" component={LogSetScreen} />
-      {/* --- END ADDITION --- */}
-
+      <Stack.Screen name="CreateExercise" component={CreateExerciseScreen} />
     </Stack.Navigator>
   );
 };
