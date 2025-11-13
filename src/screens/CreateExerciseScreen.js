@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-// 1. Import useTheme
 import { Appbar, Text, Button, TextInput, useTheme } from 'react-native-paper';
 import { useRealm } from '@realm/react';
 import { Exercise } from '../models';
 
-const CreateExerciseScreen = ({ navigation }) => {
+// 1. Receive 'route' prop
+const CreateExerciseScreen = ({ navigation, route }) => {
   const realm = useRealm();
-  // 2. Get the theme
   const theme = useTheme();
 
+  // 2. Get the prefilled muscle group
+  const { prefilledMuscleGroup } = route.params || {};
+
+  // 3. Set the initial state of muscleGroup
   const [name, setName] = useState('');
-  const [muscleGroup, setMuscleGroup] = useState('');
+  const [muscleGroup, setMuscleGroup] = useState(prefilledMuscleGroup || '');
   const [equipment, setEquipment] = useState('');
 
   const goBack = () => {
@@ -37,7 +40,6 @@ const CreateExerciseScreen = ({ navigation }) => {
   };
 
   return (
-    // 3. Apply the theme's background color
     <View
       style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Appbar.Header>
@@ -55,7 +57,7 @@ const CreateExerciseScreen = ({ navigation }) => {
         />
         <TextInput
           label="Primary Muscle Group (Required)"
-          value={muscleGroup}
+          value={muscleGroup} // 4. This will now show the prefilled value
           onChangeText={setMuscleGroup}
           mode="outlined"
           style={styles.input}

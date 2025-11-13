@@ -1,6 +1,6 @@
 import Realm from 'realm';
 
-// 1. USER Table
+// ... (User and Exercise classes are unchanged) ...
 export class User extends Realm.Object {
   static schema = {
     name: 'User',
@@ -12,8 +12,6 @@ export class User extends Realm.Object {
       unit_preference: {type: 'string', default: 'kg'}, // 'kg' | 'lbs'
       created_at: {type: 'date', default: () => new Date()},
       updated_at: {type: 'date', default: () => new Date()},
-
-      // Relationships (Inverse)
       exercises: {
         type: 'linkingObjects',
         objectType: 'Exercise',
@@ -28,7 +26,6 @@ export class User extends Realm.Object {
   };
 }
 
-// 2. EXERCISE Table
 export class Exercise extends Realm.Object {
   static schema = {
     name: 'Exercise',
@@ -36,7 +33,7 @@ export class Exercise extends Realm.Object {
     properties: {
       _id: {type: 'objectId', default: () => new Realm.BSON.ObjectId()},
       name: 'string',
-      exercise_type: 'string?', // "Strength / Cardio / Mobility"
+      exercise_type: 'string?',
       primary_muscle_group: 'string?',
       secondary_muscle_group: 'string?',
       equipment: 'string?',
@@ -44,12 +41,11 @@ export class Exercise extends Realm.Object {
       is_custom: {type: 'bool', default: false},
       created_at: {type: 'date', default: () => new Date()},
       updated_at: {type: 'date', default: () => new Date()},
-
-      // Relationship (Forward)
       user: 'User?',
     },
   };
 }
+// --- END UNCHANGED ---
 
 // 3. WORKOUT Table
 export class Workout extends Realm.Object {
@@ -59,10 +55,12 @@ export class Workout extends Realm.Object {
     properties: {
       _id: {type: 'objectId', default: () => new Realm.BSON.ObjectId()},
       date: {type: 'date', default: () => new Date()},
-      name: 'string?', // e.g., "Push Day"
+      name: 'string?',
+      status: {type: 'string', default: 'pending'},
 
       // --- THIS IS THE NEW LINE ---
-      status: {type: 'string', default: 'pending'}, // "pending" | "completed"
+      // This will store 'Chest', 'Back', etc.
+      primary_muscle_group: 'string?',
       // --- END NEW LINE ---
 
       notes: 'string?',
@@ -70,19 +68,17 @@ export class Workout extends Realm.Object {
       total_volume_kg: 'float?',
       total_exercises: 'int?',
       total_sets: 'int?',
-      feeling_rating: 'int?', // 1-5
+      feeling_rating: 'int?',
       created_at: {type: 'date', default: () => new Date()},
       updated_at: {type: 'date', default: () => new Date()},
-      deleted_at: 'date?', // For soft deletes
-
-      // Relationship (Forward)
-      user: 'User?', // <-- Also changed this to 'User?' so it can be created without a user first
+      deleted_at: 'date?',
+      user: 'User?',
       workoutExercises: 'WorkoutExercise[]',
     },
   };
 }
 
-// 4. WORKOUT_EXERCISE Table
+// ... (WorkoutExercise and Set classes are unchanged) ...
 export class WorkoutExercise extends Realm.Object {
   static schema = {
     name: 'WorkoutExercise',
@@ -98,12 +94,8 @@ export class WorkoutExercise extends Realm.Object {
       rest_time_avg_seconds: 'int?',
       created_at: {type: 'date', default: () => new Date()},
       updated_at: {type: 'date', default: () => new Date()},
-
-      // Relationship (Forward)
-      exercise: 'Exercise?', // <-- Changed this to 'Exercise?' for safety
+      exercise: 'Exercise?',
       sets: 'Set[]',
-
-      // Relationship (Inverse)
       workout: {
         type: 'linkingObjects',
         objectType: 'Workout',
@@ -113,7 +105,6 @@ export class WorkoutExercise extends Realm.Object {
   };
 }
 
-// 5. SET Table
 export class Set extends Realm.Object {
   static schema = {
     name: 'Set',
@@ -123,16 +114,14 @@ export class Set extends Realm.Object {
       set_number: 'int',
       weight_kg: 'float',
       reps: 'int',
-      duration_seconds: 'int?', // For cardio/timed sets
-      distance_meters: 'float?', // For cardio
-      rpe: 'int?', // 1-10
+      duration_seconds: 'int?',
+      distance_meters: 'float?',
+      rpe: 'int?',
       rest_time_seconds: 'int?',
       is_warmup: {type: 'bool', default: false},
       is_failure: {type: 'bool', default: false},
       notes: 'string?',
       created_at: {type: 'date', default: () => new Date()},
-
-      // Relationship (Inverse)
       workoutExercise: {
         type: 'linkingObjects',
         objectType: 'WorkoutExercise',
