@@ -17,7 +17,7 @@ const HomeScreen = ({ navigation }) => {
   const formattedDate = today.toDateString();
   const realm = useRealm();
 
-  // We still need this query to change the button's text
+  // This query is now only used to change the button's text
   const pendingWorkouts = useQuery(Workout, workouts => {
     return workouts.filtered("status == 'pending'");
   });
@@ -29,10 +29,25 @@ const HomeScreen = ({ navigation }) => {
   const lastWorkout = completedWorkouts[0];
 
   // --- THIS IS THE CHANGE ---
-  // This function is now much simpler.
+  // This function now creates a workout and navigates directly
+  // to the logging screen.
   const onQuickStart = () => {
-    // It just navigates to our new body part list.
-    navigation.navigate('SelectBodyPart');
+    let workoutToOpen;
+
+    // We no longer check for a pending workout here.
+    // "Quick Start" *always* creates a new one.
+    // (We'll build the "Resume" logic into the horizontal list later)
+    realm.write(() => {
+      workoutToOpen = realm.create('Workout', {
+        date: new Date(),
+        status: 'pending',
+      });
+    });
+
+    // Navigate to the logging screen with the new ID
+    navigation.navigate('WorkoutLogging', {
+      workoutId: workoutToOpen._id.toString(),
+    });
   };
   // --- END CHANGE ---
 
@@ -40,6 +55,7 @@ const HomeScreen = ({ navigation }) => {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}>
 
+      {/* Header (We'll remove the cog later) */}
       <View
         style={[
           styles.header,
@@ -54,7 +70,7 @@ const HomeScreen = ({ navigation }) => {
         <IconButton
           icon="cog"
           iconColor="#FFFFFF"
-          onPress={() => { /* TODO: Open settings */ }}
+          onPress={() => { navigation.navigate('Profile') /* Go to new Profile tab */ }}
         />
       </View>
 
@@ -64,9 +80,9 @@ const HomeScreen = ({ navigation }) => {
           <Button
             icon="play-circle"
             mode="contained"
-            onPress={onQuickStart} // This now calls our new, simple function
+            onPress={onQuickStart}
             style={styles.button}>
-            {/* The text still changes, which is fine */}
+            {/* We'll simplify this text later */}
             {pendingWorkouts.length > 0 ? 'Resume Editing' : 'Quick Start'}
           </Button>
           <Button
@@ -78,7 +94,6 @@ const HomeScreen = ({ navigation }) => {
           </Button>
         </View>
 
-        {/* Cards are unchanged */}
         <Card style={styles.card}>
           <Card.Title title="Your Week" />
           <Card.Content>
@@ -116,7 +131,7 @@ const HomeScreen = ({ navigation }) => {
   );
 };
 
-// Styles are unchanged
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,

@@ -31,37 +31,18 @@ const SelectExerciseScreen = ({ navigation, route }) => {
   };
 
   const onNavigateToCreate = () => {
-    // We'll also pass the bodyPart to the Create screen
-    // so it can pre-fill the muscle group field.
     navigation.navigate('CreateExercise', {
       prefilledMuscleGroup: bodyPart,
     });
   };
 
+  // --- THIS IS THE "LOOP" FIX ---
   const onSelectExercise = selectedExercise => {
-    let workoutToUpdate;
+    const workoutToUpdate = realm.objectForPrimaryKey(
+      Workout,
+      new BSON.ObjectId(workoutId),
+    );
 
-    if (workoutId) {
-      // Resuming a workout
-      workoutToUpdate = realm.objectForPrimaryKey(
-        Workout,
-        new BSON.ObjectId(workoutId),
-      );
-    } else {
-      // --- THIS IS THE CHANGE ---
-      // This is the FIRST exercise, so we create a new workout
-      // AND save the primary_muscle_group.
-      realm.write(() => {
-        workoutToUpdate = realm.create('Workout', {
-          date: new Date(),
-          status: 'pending',
-          primary_muscle_group: selectedExercise.primary_muscle_group, // <-- We save it here
-        });
-      });
-      // --- END CHANGE ---
-    }
-
-    // Add the exercise to the workout
     realm.write(() => {
       if (workoutToUpdate) {
         const newWorkoutExercise = realm.create('WorkoutExercise', {
@@ -71,11 +52,13 @@ const SelectExerciseScreen = ({ navigation, route }) => {
       }
     });
 
-    // Navigate to the logging screen
-    navigation.navigate('WorkoutLogging', {
-      workoutId: workoutToUpdate._id.toString(),
-    });
+    // 1. Instead of navigating, we "pop" two screens:
+    //    - 'SelectExerciseScreen' (this one)
+    //    - 'SelectBodyPartScreen' (the one before it)
+    //    This lands us back on 'WorkoutLoggingScreen'.
+    navigation.pop(2);
   };
+  // --- END FIX ---
 
   return (
     <View
