@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, View, StyleSheet } from 'react-native';
+import { ScrollView, View, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import {
   Button,
   Card,
@@ -9,7 +9,39 @@ import {
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRealm, useQuery } from '@realm/react';
-import { Workout } from '../models';
+import { Workout, User } from '../models';
+
+// --- NEW HELPER COMPONENT (Unchanged) ---
+const WorkoutCard = ({ workout, onPress }) => {
+  const getExerciseSummary = (workoutExercises) => {
+    if (!workoutExercises || workoutExercises.length === 0) {
+      return "No exercises";
+    }
+    const groups = workoutExercises.reduce((acc, we) => {
+      const muscle = we.exercise?.primary_muscle_group || 'Other';
+      acc[muscle] = (acc[muscle] || 0) + 1;
+      return acc;
+    }, {});
+    return Object.entries(groups)
+      .map(([muscle, count]) => `${muscle} (${count})`)
+      .join(', ');
+  };
+
+  return (
+    <TouchableOpacity onPress={onPress}>
+      <Card style={styles.workoutCard}>
+        <Card.Content>
+          <Text variant="titleMedium">{workout.name || workout.date.toDateString()}</Text>
+          <Text variant="bodySmall" numberOfLines={2}>
+            {getExerciseSummary(workout.workoutExercises)}
+          </Text>
+        </Card.Content>
+      </Card>
+    </TouchableOpacity>
+  );
+};
+// --- END HELPER COMPONENT ---
+
 
 const HomeScreen = ({ navigation }) => {
   const theme = useTheme();
@@ -17,45 +49,55 @@ const HomeScreen = ({ navigation }) => {
   const formattedDate = today.toDateString();
   const realm = useRealm();
 
-  // This query is now only used to change the button's text
+  const users = useQuery(User);
+  const user = users[0];
+
   const pendingWorkouts = useQuery(Workout, workouts => {
-    return workouts.filtered("status == 'pending'");
+    return workouts.filtered("status == 'pending'").sorted('date', true);
   });
 
   const completedWorkouts = useQuery(Workout, workouts => {
     return workouts.filtered("status == 'completed'").sorted('date', true);
   });
 
-  const lastWorkout = completedWorkouts[0];
+  // --- NEW LOGIC: WORKOUTS THIS WEEK ---
+  // 1. Get the date for the start of the current week (Sunday)
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - today.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
 
-  // --- THIS IS THE CHANGE ---
-  // This function now creates a workout and navigates directly
-  // to the logging screen.
+  // 2. Query for workouts completed this week
+  const completedWorkoutsThisWeek = useQuery(Workout, workouts => {
+    return workouts.filtered("status == 'completed' AND date >= $0", startOfWeek);
+  });
+  // --- END NEW LOGIC ---
+
   const onQuickStart = () => {
-    let workoutToOpen;
-
-    // We no longer check for a pending workout here.
-    // "Quick Start" *always* creates a new one.
-    // (We'll build the "Resume" logic into the horizontal list later)
+    let newWorkout;
     realm.write(() => {
-      workoutToOpen = realm.create('Workout', {
+      newWorkout = realm.create('Workout', {
         date: new Date(),
         status: 'pending',
+        user: user,
       });
     });
 
-    // Navigate to the logging screen with the new ID
     navigation.navigate('WorkoutLogging', {
-      workoutId: workoutToOpen._id.toString(),
+      workoutId: newWorkout._id.toString(),
     });
   };
-  // --- END CHANGE ---
+
+  const onViewWorkout = (workoutId) => {
+    navigation.navigate('WorkoutLogging', {
+      workoutId: workoutId.toString(),
+    });
+  };
 
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}>
 
-      {/* Header (We'll remove the cog later) */}
+      {/* Header (Unchanged) */}
       <View
         style={[
           styles.header,
@@ -63,27 +105,23 @@ const HomeScreen = ({ navigation }) => {
         ]}>
 
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Hello, User!!!</Text>
+          <Text style={styles.headerTitle}>
+            Hello, {user ? user.name : 'User'}!
+          </Text>
           <Text style={styles.headerSubtitle}>{formattedDate}</Text>
         </View>
-
-        <IconButton
-          icon="cog"
-          iconColor="#FFFFFF"
-          onPress={() => { navigation.navigate('Profile') /* Go to new Profile tab */ }}
-        />
       </View>
 
       <ScrollView style={styles.content}>
 
+        {/* Call to Action (Unchanged) */}
         <View style={styles.buttonRow}>
           <Button
             icon="play-circle"
             mode="contained"
             onPress={onQuickStart}
             style={styles.button}>
-            {/* We'll simplify this text later */}
-            {pendingWorkouts.length > 0 ? 'Resume Editing' : 'Quick Start'}
+            Start New Workout
           </Button>
           <Button
             icon="clipboard-list"
@@ -94,37 +132,59 @@ const HomeScreen = ({ navigation }) => {
           </Button>
         </View>
 
+        {/* --- THIS IS THE NEW CARD --- */}
+        {/* 3. Re-added the Progress Snapshot card */}
         <Card style={styles.card}>
           <Card.Title title="Your Week" />
           <Card.Content>
+            {/* We'll make the streak dynamic later */}
             <Text variant="bodyMedium">🔥 0-Day Streak!</Text>
+            {/* This count is now live */}
             <Text variant="bodyMedium">
-              💪 {completedWorkouts.length} Workouts This Week
+              💪 {completedWorkoutsThisWeek.length} Workouts This Week
             </Text>
-            <Text variant="bodyMedium">Overall Volume: 0 kg</Text>
           </Card.Content>
         </Card>
+        {/* --- END NEW CARD --- */}
 
-        <Card style={styles.card}>
-          <Card.Title title="Last Workout" />
-          <Card.Content>
-            {lastWorkout ? (
-              <View>
-                <Text variant="bodyMedium">
-                  {lastWorkout.date.toDateString()}
-                </Text>
-                <Text variant="bodyMedium">
-                  {lastWorkout.workoutExercises.length} Exercises
-                </Text>
-              </View>
-            ) : (
-              <View>
-                <Text variant="bodyMedium">You haven't logged any workouts yet.</Text>
-                <Text variant="bodyMedium">Tap "Quick Start" to begin!</Text>
-              </View>
-            )}
-          </Card.Content>
-        </Card>
+
+        {/* Pending Workouts Section (Unchanged) */}
+        {pendingWorkouts.length > 0 && (
+          <View style={styles.section}>
+            <Text variant="titleLarge" style={styles.sectionTitle}>Resume Workout</Text>
+            <FlatList
+              data={pendingWorkouts}
+              renderItem={({ item }) => (
+                <WorkoutCard workout={item} onPress={() => onViewWorkout(item._id)} />
+              )}
+              keyExtractor={item => item._id.toString()}
+              horizontal={true}
+              showsHorizontalScrollIndicator={false}
+            />
+          </View>
+        )}
+
+        {/* Completed Workouts Section (Unchanged) */}
+        <View style={styles.section}>
+          <Text variant="titleLarge" style={styles.sectionTitle}>Workout History</Text>
+          {completedWorkouts.length > 0 ? (
+            <FlatList
+              data={completedWorkouts}
+              renderItem={({ item }) => (
+                <WorkoutCard workout={item} onPress={() => onViewWorkout(item._id)} />
+              )}
+              keyExtractor={item => item._id.toString()}
+              horizontal={true}
+              showsHorizontalScrollIndicator={false}
+            />
+          ) : (
+            <Card style={styles.placeholderCard}>
+              <Card.Content>
+                <Text variant="bodyMedium">You haven't completed any workouts yet.</Text>
+              </Card.Content>
+            </Card>
+          )}
+        </View>
 
       </ScrollView>
     </SafeAreaView>
@@ -140,7 +200,7 @@ const styles = StyleSheet.create({
     height: 80,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     paddingHorizontal: 16,
   },
   headerContent: {},
@@ -154,20 +214,39 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   content: {
-    padding: 16,
+    paddingVertical: 16,
   },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 24,
+    paddingHorizontal: 16,
   },
   button: {
     flex: 1,
     marginHorizontal: 4,
   },
+  // --- NEW STYLE ---
   card: {
-    marginBottom: 16,
+    marginBottom: 24,
+    marginHorizontal: 16,
   },
+  // --- END NEW STYLE ---
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    marginBottom: 12,
+    paddingHorizontal: 16,
+  },
+  workoutCard: {
+    width: 250,
+    marginRight: 12,
+    marginLeft: 16,
+  },
+  placeholderCard: {
+    marginHorizontal: 16,
+  }
 });
 
 export default HomeScreen;

@@ -1,6 +1,6 @@
 import Realm from 'realm';
 
-// ... (User and Exercise classes are unchanged) ...
+// 1. USER Table
 export class User extends Realm.Object {
   static schema = {
     name: 'User',
@@ -8,10 +8,16 @@ export class User extends Realm.Object {
     properties: {
       _id: {type: 'objectId', default: () => new Realm.BSON.ObjectId()},
       name: 'string',
-      email: 'string',
-      unit_preference: {type: 'string', default: 'kg'}, // 'kg' | 'lbs'
+
+      // --- THIS IS THE FIX ---
+      // We add a '?' to make the email field optional
+      email: 'string?',
+      // --- END FIX ---
+
+      unit_preference: {type: 'string', default: 'kg'},
       created_at: {type: 'date', default: () => new Date()},
       updated_at: {type: 'date', default: () => new Date()},
+
       exercises: {
         type: 'linkingObjects',
         objectType: 'Exercise',
@@ -26,6 +32,7 @@ export class User extends Realm.Object {
   };
 }
 
+// ... (Rest of the file is unchanged) ...
 export class Exercise extends Realm.Object {
   static schema = {
     name: 'Exercise',
@@ -45,9 +52,7 @@ export class Exercise extends Realm.Object {
     },
   };
 }
-// --- END UNCHANGED ---
 
-// 3. WORKOUT Table
 export class Workout extends Realm.Object {
   static schema = {
     name: 'Workout',
@@ -57,12 +62,7 @@ export class Workout extends Realm.Object {
       date: {type: 'date', default: () => new Date()},
       name: 'string?',
       status: {type: 'string', default: 'pending'},
-
-      // --- THIS IS THE NEW LINE ---
-      // This will store 'Chest', 'Back', etc.
       primary_muscle_group: 'string?',
-      // --- END NEW LINE ---
-
       notes: 'string?',
       duration_minutes: 'float?',
       total_volume_kg: 'float?',
@@ -78,7 +78,6 @@ export class Workout extends Realm.Object {
   };
 }
 
-// ... (WorkoutExercise and Set classes are unchanged) ...
 export class WorkoutExercise extends Realm.Object {
   static schema = {
     name: 'WorkoutExercise',

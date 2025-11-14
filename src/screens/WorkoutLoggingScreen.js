@@ -1,7 +1,6 @@
 import React from 'react';
-// 1. Import Alert
 import { View, StyleSheet, FlatList, Alert } from 'react-native';
-import { Appbar, Text, Button, List, useTheme } from 'react-native-paper';
+import { Appbar, Text, Button, List, useTheme, Divider } from 'react-native-paper';
 import { useRealm, useObject } from '@realm/react';
 import { Workout } from '../models';
 import { BSON } from 'realm';
@@ -12,8 +11,12 @@ const WorkoutLoggingScreen = ({ navigation, route }) => {
   const theme = useTheme();
 
   const activeWorkout = useObject(Workout, new BSON.ObjectId(workoutId));
+  const isEditing = activeWorkout?.status === 'pending';
 
-  // --- THIS IS THE "FINISH" FIX ---
+  const goBack = () => {
+    navigation.popToTop();
+  };
+
   const onFinishWorkout = () => {
     realm.write(() => {
       const workoutToUpdate = realm.objectForPrimaryKey(
@@ -25,39 +28,38 @@ const WorkoutLoggingScreen = ({ navigation, route }) => {
         workoutToUpdate.updated_at = new Date();
       }
     });
-    // 2. We use popToTop() to go all the way back to the
-    //    first screen in the stack (HomeScreen).
     navigation.popToTop();
   };
-  // --- END FIX ---
 
-  // --- THIS IS THE "CANCEL" FIX ---
-  const onCancelWorkout = () => {
+  const onDeleteWorkout = () => {
     Alert.alert(
-      "Cancel Workout?",
-      "Are you sure? This will delete this pending workout.",
+      "Delete Workout?",
+      "Are you sure you want to delete this workout? This action cannot be undone.",
       [
-        // The "No" button
-        { text: "No", style: "cancel" },
-        // The "Yes" button
+        { text: "Cancel", style: "cancel" },
         {
-          text: "Yes, Cancel",
+          text: "Delete",
           style: "destructive",
           onPress: () => {
             realm.write(() => {
               if (activeWorkout) {
-                // We delete the entire workout object
                 realm.delete(activeWorkout);
               }
             });
-            // 3. Go all the way back to Home
             navigation.popToTop();
           },
         },
       ]
     );
   };
-  // --- END FIX ---
+
+  const onEnableEditing = () => {
+    realm.write(() => {
+      if (activeWorkout) {
+        activeWorkout.status = 'pending';
+      }
+    });
+  };
 
   const onAddExercise = () => {
     navigation.navigate('SelectBodyPart', {
@@ -68,18 +70,23 @@ const WorkoutLoggingScreen = ({ navigation, route }) => {
   const onSelectWorkoutExercise = (workoutExerciseId) => {
     navigation.navigate('LogSet', {
       workoutExerciseId: workoutExerciseId.toString(),
+      isEditing: isEditing,
     });
   };
 
   return (
     <View
       style={[styles.container, { backgroundColor: theme.colors.background }]}>
+
       <Appbar.Header>
-        {/* 4. Hook up the Back button to our new Cancel function */}
-        <Appbar.BackAction onPress={onCancelWorkout} />
-        <Appbar.Content title="Log Workout" />
-        {/* 5. Hook up the Check button to our new Finish function */}
-        <Appbar.Action icon="check" onPress={onFinishWorkout} />
+        <Appbar.BackAction onPress={goBack} />
+        <Appbar.Content title={isEditing ? "Current Workout" : "Workout Summary"} />
+
+        {isEditing ? (
+          <Appbar.Action icon="check" onPress={onFinishWorkout} />
+        ) : (
+          <Appbar.Action icon="pencil" onPress={onEnableEditing} />
+        )}
       </Appbar.Header>
 
       <FlatList
@@ -95,20 +102,49 @@ const WorkoutLoggingScreen = ({ navigation, route }) => {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text variant="headlineSmall">Workout is empty</Text>
-            <Text variant="bodyLarge" style={styles.emptyText}>
-              Tap "Add Exercise" to begin.
-            </Text>
+            {isEditing && (
+              <Text variant="bodyLarge" style={styles.emptyText}>
+                Tap "Add Exercise" to begin.
+              </Text>
+            )}
           </View>
         }
-        ListFooterComponent={
-          <Button
-            icon="plus"
-            mode="contained"
-            onPress={onAddExercise}
-            style={{ margin: 16 }}>
-            Add Exercise
-          </Button>
-        }
+
+        // --- THIS IS THE FIX ---
+        // The conditional logic must be INSIDE the prop
+        ListFooterComponent={() => {
+          // If we are not editing, render nothing
+          if (!isEditing) {
+            return null;
+          }
+
+          // If we are editing, render the buttons
+          return (
+            <View style={styles.footerContainer}>
+              <Button
+                icon="plus"
+                mode="contained"
+                onPress={onAddExercise}
+                style={styles.footerButton}>
+                Add Exercise
+              </Button>
+
+              <Divider style={styles.divider} />
+
+              <Button
+                icon="delete"
+                mode="outlined"
+                onPress={onDeleteWorkout}
+                style={styles.footerButton}
+                textColor={theme.colors.error}
+                borderColor={theme.colors.error}
+              >
+                Delete Workout
+              </Button>
+            </View>
+          );
+        }}
+        // --- END FIX ---
       />
     </View>
   );
@@ -126,6 +162,15 @@ const styles = StyleSheet.create({
   emptyText: {
     marginTop: 8,
     color: 'gray',
+  },
+  footerContainer: {
+    padding: 16,
+  },
+  footerButton: {
+    marginTop: 8,
+  },
+  divider: {
+    marginVertical: 16,
   },
 });
 
