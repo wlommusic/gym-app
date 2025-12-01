@@ -70,7 +70,6 @@ const WorkoutLoggingScreen = ({ navigation, route }) => {
   const onSelectWorkoutExercise = (workoutExerciseId) => {
     navigation.navigate('LogSet', {
       workoutExerciseId: workoutExerciseId.toString(),
-      isEditing: isEditing,
     });
   };
 
@@ -110,15 +109,8 @@ const WorkoutLoggingScreen = ({ navigation, route }) => {
           </View>
         }
 
-        // --- THIS IS THE FIX ---
-        // The conditional logic must be INSIDE the prop
         ListFooterComponent={() => {
-          // If we are not editing, render nothing
-          if (!isEditing) {
-            return null;
-          }
-
-          // If we are editing, render the buttons
+          if (!isEditing) return null;
           return (
             <View style={styles.footerContainer}>
               <Button
@@ -144,34 +136,18 @@ const WorkoutLoggingScreen = ({ navigation, route }) => {
             </View>
           );
         }}
-        // --- END FIX ---
       />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  emptyContainer: {
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 48,
-  },
-  emptyText: {
-    marginTop: 8,
-    color: 'gray',
-  },
-  footerContainer: {
-    padding: 16,
-  },
-  footerButton: {
-    marginTop: 8,
-  },
-  divider: {
-    marginVertical: 16,
-  },
+  container: { flex: 1 },
+  emptyContainer: { padding: 16, alignItems: 'center', marginTop: 48 },
+  emptyText: { marginTop: 8, color: 'gray' },
+  footerContainer: { padding: 16 },
+  footerButton: { marginTop: 8 },
+  divider: { marginVertical: 16 },
 });
 
 export default WorkoutLoggingScreen;

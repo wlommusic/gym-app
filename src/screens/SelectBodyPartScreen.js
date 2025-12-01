@@ -2,21 +2,14 @@ import React from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
 import { Appbar, List, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-// We no longer need useQuery or Workout here
-// import { useQuery } from '@realm/react';
-// import { Workout } from '../models';
 
 const BODY_PARTS = [
   'Chest', 'Back', 'Shoulders', 'Legs', 'Biceps', 'Triceps', 'Abs', 'Cardio', 'Other',
 ];
 
-// 1. We now receive the 'route' prop
 const SelectBodyPartScreen = ({ navigation, route }) => {
   const theme = useTheme();
-
-  // 2. We get the workoutId from the route.
-  //    If we came from 'Quick Start', this will be 'undefined'.
-  //    If we came from 'Add Exercise', this will have the ID.
+  // CLEAN PARAMETERS
   const { workoutId } = route.params || {};
 
   const goBack = () => {
@@ -26,7 +19,6 @@ const SelectBodyPartScreen = ({ navigation, route }) => {
   const onSelectBodyPart = (bodyPart) => {
     navigation.navigate('SelectExercise', {
       bodyPart: bodyPart,
-      // 3. We pass the workoutId (or undefined) along
       workoutId: workoutId,
     });
   };
@@ -55,9 +47,7 @@ const SelectBodyPartScreen = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
 });
 
 export default SelectBodyPartScreen;

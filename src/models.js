@@ -8,16 +8,11 @@ export class User extends Realm.Object {
     properties: {
       _id: {type: 'objectId', default: () => new Realm.BSON.ObjectId()},
       name: 'string',
-
-      // --- THIS IS THE FIX ---
-      // We add a '?' to make the email field optional
       email: 'string?',
-      // --- END FIX ---
-
       unit_preference: {type: 'string', default: 'kg'},
+      current_streak: {type: 'int', default: 0},
       created_at: {type: 'date', default: () => new Date()},
       updated_at: {type: 'date', default: () => new Date()},
-
       exercises: {
         type: 'linkingObjects',
         objectType: 'Exercise',
@@ -32,7 +27,7 @@ export class User extends Realm.Object {
   };
 }
 
-// ... (Rest of the file is unchanged) ...
+// 2. EXERCISE Table
 export class Exercise extends Realm.Object {
   static schema = {
     name: 'Exercise',
@@ -53,6 +48,7 @@ export class Exercise extends Realm.Object {
   };
 }
 
+// 3. WORKOUT Table
 export class Workout extends Realm.Object {
   static schema = {
     name: 'Workout',
@@ -78,6 +74,7 @@ export class Workout extends Realm.Object {
   };
 }
 
+// 4. WORKOUT_EXERCISE Table
 export class WorkoutExercise extends Realm.Object {
   static schema = {
     name: 'WorkoutExercise',
@@ -104,6 +101,7 @@ export class WorkoutExercise extends Realm.Object {
   };
 }
 
+// 5. SET Table
 export class Set extends Realm.Object {
   static schema = {
     name: 'Set',

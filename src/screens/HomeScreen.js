@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, View, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { ScrollView, View, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
 import {
   Button,
   Card,
@@ -11,15 +11,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRealm, useQuery } from '@realm/react';
 import { Workout, User } from '../models';
 
-// --- NEW HELPER COMPONENT (Unchanged) ---
 const WorkoutCard = ({ workout, onPress }) => {
+  if (!workout || !workout.isValid()) return null;
+
   const getExerciseSummary = (workoutExercises) => {
     if (!workoutExercises || workoutExercises.length === 0) {
       return "No exercises";
     }
     const groups = workoutExercises.reduce((acc, we) => {
-      const muscle = we.exercise?.primary_muscle_group || 'Other';
-      acc[muscle] = (acc[muscle] || 0) + 1;
+      if (we && we.isValid() && we.exercise && we.exercise.isValid()) {
+        const muscle = we.exercise.primary_muscle_group || 'Other';
+        acc[muscle] = (acc[muscle] || 0) + 1;
+      }
       return acc;
     }, {});
     return Object.entries(groups)
@@ -40,8 +43,6 @@ const WorkoutCard = ({ workout, onPress }) => {
     </TouchableOpacity>
   );
 };
-// --- END HELPER COMPONENT ---
-
 
 const HomeScreen = ({ navigation }) => {
   const theme = useTheme();
@@ -60,19 +61,20 @@ const HomeScreen = ({ navigation }) => {
     return workouts.filtered("status == 'completed'").sorted('date', true);
   });
 
-  // --- NEW LOGIC: WORKOUTS THIS WEEK ---
-  // 1. Get the date for the start of the current week (Sunday)
   const startOfWeek = new Date(today);
   startOfWeek.setDate(today.getDate() - today.getDay());
   startOfWeek.setHours(0, 0, 0, 0);
 
-  // 2. Query for workouts completed this week
   const completedWorkoutsThisWeek = useQuery(Workout, workouts => {
     return workouts.filtered("status == 'completed' AND date >= $0", startOfWeek);
   });
-  // --- END NEW LOGIC ---
 
   const onQuickStart = () => {
+    if (!user) {
+      Alert.alert("Error", "No user profile found. Please restart the app.");
+      return;
+    }
+
     let newWorkout;
     realm.write(() => {
       newWorkout = realm.create('Workout', {
@@ -97,13 +99,11 @@ const HomeScreen = ({ navigation }) => {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}>
 
-      {/* Header (Unchanged) */}
       <View
         style={[
           styles.header,
           { backgroundColor: theme.colors.primary },
         ]}>
-
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>
             Hello, {user ? user.name : 'User'}!
@@ -113,8 +113,6 @@ const HomeScreen = ({ navigation }) => {
       </View>
 
       <ScrollView style={styles.content}>
-
-        {/* Call to Action (Unchanged) */}
         <View style={styles.buttonRow}>
           <Button
             icon="play-circle"
@@ -126,29 +124,22 @@ const HomeScreen = ({ navigation }) => {
           <Button
             icon="clipboard-list"
             mode="outlined"
-            onPress={() => { /* TODO: Open Templates */ }}
+            onPress={() => { /* TODO: Templates Later */ }}
             style={styles.button}>
             Templates
           </Button>
         </View>
 
-        {/* --- THIS IS THE NEW CARD --- */}
-        {/* 3. Re-added the Progress Snapshot card */}
         <Card style={styles.card}>
           <Card.Title title="Your Week" />
           <Card.Content>
-            {/* We'll make the streak dynamic later */}
             <Text variant="bodyMedium">🔥 0-Day Streak!</Text>
-            {/* This count is now live */}
             <Text variant="bodyMedium">
               💪 {completedWorkoutsThisWeek.length} Workouts This Week
             </Text>
           </Card.Content>
         </Card>
-        {/* --- END NEW CARD --- */}
 
-
-        {/* Pending Workouts Section (Unchanged) */}
         {pendingWorkouts.length > 0 && (
           <View style={styles.section}>
             <Text variant="titleLarge" style={styles.sectionTitle}>Resume Workout</Text>
@@ -164,7 +155,6 @@ const HomeScreen = ({ navigation }) => {
           </View>
         )}
 
-        {/* Completed Workouts Section (Unchanged) */}
         <View style={styles.section}>
           <Text variant="titleLarge" style={styles.sectionTitle}>Workout History</Text>
           {completedWorkouts.length > 0 ? (
@@ -185,17 +175,13 @@ const HomeScreen = ({ navigation }) => {
             </Card>
           )}
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );
 };
 
-// Styles
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   header: {
     height: 80,
     flexDirection: 'row',
@@ -204,49 +190,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   headerContent: {},
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#FFFFFF',
-  },
-  content: {
-    paddingVertical: 16,
-  },
+  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#FFFFFF' },
+  headerSubtitle: { fontSize: 14, color: '#FFFFFF' },
+  content: { paddingVertical: 16 },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 24,
     paddingHorizontal: 16,
   },
-  button: {
-    flex: 1,
-    marginHorizontal: 4,
-  },
-  // --- NEW STYLE ---
-  card: {
-    marginBottom: 24,
-    marginHorizontal: 16,
-  },
-  // --- END NEW STYLE ---
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    marginBottom: 12,
-    paddingHorizontal: 16,
-  },
-  workoutCard: {
-    width: 250,
-    marginRight: 12,
-    marginLeft: 16,
-  },
-  placeholderCard: {
-    marginHorizontal: 16,
-  }
+  button: { flex: 1, marginHorizontal: 4 },
+  card: { marginBottom: 24, marginHorizontal: 16 },
+  section: { marginBottom: 24 },
+  sectionTitle: { marginBottom: 12, paddingHorizontal: 16 },
+  workoutCard: { width: 250, marginRight: 12, marginLeft: 16 },
+  placeholderCard: { marginHorizontal: 16 }
 });
 
 export default HomeScreen;

@@ -17,7 +17,6 @@ const SelectExerciseScreen = ({ navigation, route }) => {
       .sorted('name');
   });
 
-  // Seeder logic (unchanged)
   if (allExercises.length === 0 && bodyPart === 'Chest') {
     realm.write(() => {
       defaultExercises.forEach(exercise => {
@@ -36,12 +35,23 @@ const SelectExerciseScreen = ({ navigation, route }) => {
     });
   };
 
-  // --- THIS IS THE "LOOP" FIX ---
   const onSelectExercise = selectedExercise => {
-    const workoutToUpdate = realm.objectForPrimaryKey(
-      Workout,
-      new BSON.ObjectId(workoutId),
-    );
+    let workoutToUpdate;
+
+    if (workoutId) {
+      workoutToUpdate = realm.objectForPrimaryKey(
+        Workout,
+        new BSON.ObjectId(workoutId),
+      );
+    } else {
+      realm.write(() => {
+        workoutToUpdate = realm.create('Workout', {
+          date: new Date(),
+          status: 'pending',
+          primary_muscle_group: selectedExercise.primary_muscle_group,
+        });
+      });
+    }
 
     realm.write(() => {
       if (workoutToUpdate) {
@@ -52,13 +62,10 @@ const SelectExerciseScreen = ({ navigation, route }) => {
       }
     });
 
-    // 1. Instead of navigating, we "pop" two screens:
-    //    - 'SelectExerciseScreen' (this one)
-    //    - 'SelectBodyPartScreen' (the one before it)
-    //    This lands us back on 'WorkoutLoggingScreen'.
-    navigation.pop(2);
+    navigation.navigate('WorkoutLogging', {
+      workoutId: workoutToUpdate._id.toString(),
+    });
   };
-  // --- END FIX ---
 
   return (
     <View
@@ -90,14 +97,8 @@ const SelectExerciseScreen = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  emptyText: {
-    padding: 16,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
+  container: { flex: 1 },
+  emptyText: { padding: 16, textAlign: 'center', fontStyle: 'italic' },
 });
 
 export default SelectExerciseScreen;

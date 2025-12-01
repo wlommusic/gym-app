@@ -7,7 +7,7 @@ import { defaultExercises } from './data/seedExercises';
 
 export const realmConfig = {
   schema: [User, Exercise, Workout, WorkoutExercise, Set],
-  schemaVersion: 4,
+  schemaVersion: 5,
 
   onFirstOpen(realm) {
     const exercises = realm.objects('Exercise');
