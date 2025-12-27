@@ -23,6 +23,7 @@ export class User extends Realm.Object {
         objectType: 'Workout',
         property: 'user',
       },
+      workoutTemplates: 'WorkoutTemplate[]',
     },
   };
 }
@@ -123,6 +124,69 @@ export class Set extends Realm.Object {
         type: 'linkingObjects',
         objectType: 'WorkoutExercise',
         property: 'sets',
+      },
+    },
+  };
+}
+
+// 6. WORKOUT_TEMPLATE Table
+export class WorkoutTemplate extends Realm.Object {
+  static schema = {
+    name: 'WorkoutTemplate',
+    primaryKey: '_id',
+    properties: {
+      _id: {type: 'objectId', default: () => new Realm.BSON.ObjectId()},
+      name: 'string',
+      description: 'string?',
+      is_active: {type: 'bool', default: false},
+      is_custom: {type: 'bool', default: false},
+      created_at: {type: 'date', default: () => new Date()},
+      updated_at: {type: 'date', default: () => new Date()},
+      dailyWorkouts: 'DailyWorkout[]',
+      user: {
+        type: 'linkingObjects',
+        objectType: 'User',
+        property: 'workoutTemplates',
+      },
+    },
+  };
+}
+
+// 7. DAILY_WORKOUT Table
+export class DailyWorkout extends Realm.Object {
+  static schema = {
+    name: 'DailyWorkout',
+    primaryKey: '_id',
+    properties: {
+      _id: {type: 'objectId', default: () => new Realm.BSON.ObjectId()},
+      day_of_week: 'string', // e.g., 'Monday', 'Tuesday'
+      workout_title: 'string',
+      is_rest_day: {type: 'bool', default: false},
+      exercises: 'TemplateExercise[]',
+      template: {
+        type: 'linkingObjects',
+        objectType: 'WorkoutTemplate',
+        property: 'dailyWorkouts',
+      },
+    },
+  };
+}
+
+// 8. TEMPLATE_EXERCISE Table
+export class TemplateExercise extends Realm.Object {
+  static schema = {
+    name: 'TemplateExercise',
+    primaryKey: '_id',
+    properties: {
+      _id: {type: 'objectId', default: () => new Realm.BSON.ObjectId()},
+      exercise_name: 'string',
+      sets: 'string',
+      reps_or_time: 'string',
+      order: 'int',
+      dailyWorkout: {
+        type: 'linkingObjects',
+        objectType: 'DailyWorkout',
+        property: 'exercises',
       },
     },
   };

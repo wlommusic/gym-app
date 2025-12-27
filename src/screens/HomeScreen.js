@@ -119,12 +119,12 @@ const HomeScreen = ({ navigation }) => {
             mode="contained"
             onPress={onQuickStart}
             style={styles.button}>
-            Start New Workout
+            Quick start
           </Button>
           <Button
             icon="clipboard-list"
             mode="outlined"
-            onPress={() => { /* TODO: Templates Later */ }}
+            onPress={() => navigation.navigate('Templates')}
             style={styles.button}>
             Templates
           </Button>
