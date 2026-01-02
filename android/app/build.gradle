@@ -2,29 +2,40 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
+import java.util.Properties
+
 /**
- * Hermes toggle (THIS is what your RN version uses)
+ * Hermes toggle
  */
 def hermesEnabled = true
 
 /**
- * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
+ * Proguard toggle
  */
 def enableProguardInReleaseBuilds = false
 
 /**
- * JavaScriptCore fallback (used only if Hermes is disabled)
+ * JavaScriptCore fallback (only used if Hermes is disabled)
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
+
+/**
+ * Load keystore properties
+ */
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
 
 react {
     autolinkLibrariesWithApp()
 }
 
 android {
-    ndkVersion rootProject.ext.ndkVersion
+    compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
-    compileSdk rootProject.ext.compileSdkVersion
+    ndkVersion rootProject.ext.ndkVersion
 
     namespace "com.gymtrackerapp"
 
@@ -37,11 +48,13 @@ android {
     }
 
     signingConfigs {
-        debug {
-            storeFile file('debug.keystore')
-            storePassword 'android'
-            keyAlias 'androiddebugkey'
-            keyPassword 'android'
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
         }
     }
 
@@ -49,10 +62,22 @@ android {
         debug {
             signingConfig signingConfigs.debug
         }
+
         release {
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
+            shrinkResources false
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+        }
+    }
+
+    /**
+     * Rename APK output
+     */
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            def appName = "gymapp"
+            outputFileName = "${appName}-${variant.buildType.name}.apk"
         }
     }
 }
@@ -60,7 +85,6 @@ android {
 dependencies {
     implementation("com.facebook.react:react-android")
 
-    // Hermes (ENABLED)
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
     } else {
